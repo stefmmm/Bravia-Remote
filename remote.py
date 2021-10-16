@@ -7,13 +7,15 @@ import json
 def main(argv):
     poweropt = ''
     volumeopt = 0
+    volumeopt2 = 0
+    volumeopt3 = 0
     channelopt = ''
     appopt = ''
     ipopt = ''
     keyopt = ''
 
     try:
-        options, args = getopt.getopt(argv, "hi:k:p:v:c:a:", ["help", "ip=", "key=", "power=", "volume=", "channel=", "app="])
+        options, args = getopt.getopt(argv, "hi:k:p:v:c:a:U:D:", ["help", "ip=", "key=", "power=", "volume=", "volumeup=", "volumedown=", "channel=", "app="])
     except getopt.GetoptError:
         print('USAGE: remote.py -i [ip address] -k [pre-shared Key] [option] [option arg]')
         print('-h or --help for options.')
@@ -24,6 +26,8 @@ def main(argv):
             print('Options:')
             print('-p [on/off] | --power [on/off]')
             print('-v [1-100] | --volume [1-100]')
+            print('-U [1-100] | --volumeup [1-100]')
+            print('-D [1-100] | --volumedown [1-100]')
             print('-c [hdmi1-hdmi4] | --channel [hdmi1-hdmi4]')
             print('-a [youtube/netflix/twitch/spotify] | --app [youtube/netflix/twitch/spotify]')
             sys.exit()
@@ -45,11 +49,26 @@ def main(argv):
                 pstatus = False
                 pcontrol(ipopt, keyopt, pstatus)
             else:
-                continue
+                print('Invalid power option')
+                sys.exit()
         elif option in ("-v", "--volume"):
             volumeopt = int(arg)
             if volumeopt in range(0, 101):
                 vcontrol(ipopt, keyopt, volumeopt)
+            else:
+                print('Invalid volume range')
+                sys.exit(1)
+        elif option in ("-U", "--volumeup"):
+            volumeopt2 = int(arg)
+            if volumeopt in range(0, 101):
+                vcontrol2(ipopt, keyopt, volumeopt2)
+            else:
+                print('Invalid volume range')
+                sys.exit(1)
+        elif option in ("-D", "--volumedown"):
+            volumeopt3 = int(arg)
+            if volumeopt in range(0, 101):
+                vcontrol3(ipopt, keyopt, volumeopt3)
             else:
                 print('Invalid volume range')
                 sys.exit(1)
@@ -90,8 +109,8 @@ def main(argv):
 
     print('Power =', poweropt)
     print('Volume =', volumeopt)
-    print('Channel = ', channelopt)
-    print('App = ', appopt)
+    print('Channel =', channelopt)
+    print('App =', appopt)
 
 
 def pcontrol(ipopt, keyopt, pstatus):
@@ -109,7 +128,7 @@ def pcontrol(ipopt, keyopt, pstatus):
     req = requests.post(url=url, data=json.dumps(data), headers=headers)
     print(req.status_code)
 
-
+# absolute volume
 def vcontrol(ipopt, keyopt, volumeopt):
     url = f"http://{ipopt}/sony/audio"
     headers = {
@@ -127,6 +146,41 @@ def vcontrol(ipopt, keyopt, volumeopt):
     req = requests.post(url=url, data=json.dumps(data), headers=headers)
     print(req.status_code)
 
+# volume up
+def vcontrol2(ipopt, keyopt, volumeopt2):
+    url = f"http://{ipopt}/sony/audio"
+    headers = {
+        "X-Auth-PSK": f"{keyopt}"
+    }
+    data = {
+        "method": "setAudioVolume",
+        "id": 601,
+        "params": [{
+            "volume": f"+{volumeopt2}",
+            "target": "speaker"
+        }],
+        "version": "1.0"
+    }
+    req = requests.post(url=url, data=json.dumps(data), headers=headers)
+    print(req.status_code)
+
+# volume down
+def vcontrol3(ipopt, keyopt, volumeopt3):
+    url = f"http://{ipopt}/sony/audio"
+    headers = {
+        "X-Auth-PSK": f"{keyopt}"
+    }
+    data = {
+        "method": "setAudioVolume",
+        "id": 601,
+        "params": [{
+            "volume": f"-{volumeopt3}",
+            "target": "speaker"
+        }],
+        "version": "1.0"
+    }
+    req = requests.post(url=url, data=json.dumps(data), headers=headers)
+    print(req.status_code)
 
 def ccontrol(ipopt, keyopt, channel):
     url = f"http://{ipopt}/sony/avContent"
